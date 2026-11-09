@@ -1,0 +1,43 @@
+import { ArrowRight, Building2, Layers3 } from "lucide-react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { AvailabilityBadge } from "@/components/availability-badge";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { DemoNotice } from "@/components/demo-notice";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { demoDatabase } from "@/data/demo-database";
+import { countAvailability, getFloorFlats, getTowerFlats, getTowerFloors } from "@/data/queries";
+import { formatArea, formatPrice } from "@/lib/formatters";
+import { ApartmentNotFound } from "@/pages/apartments/apartment-shared";
+
+export function TowerFloorPage() {
+  const { pathname } = useLocation();
+  const { projectId, towerId, floorId } = useParams();
+  const project = projectId ? demoDatabase.apartmentProjects[projectId] : undefined;
+  const tower = towerId ? demoDatabase.towers[towerId] : undefined;
+  const floor = floorId ? demoDatabase.floors[floorId] : undefined;
+  if (!project || !tower || tower.projectId !== project.id || (floorId && (!floor || floor.towerId !== tower.id))) return <ApartmentNotFound />;
+  const view = floor ? "floor" : pathname.endsWith("/floors") ? "selector" : "tower";
+  const floors = getTowerFloors(tower);
+  const title = view === "tower" ? tower.name : view === "selector" ? `Choose a floor in ${tower.name}` : `${floor!.label} residence layout`;
+  return <main><section className="bg-navy-950 text-white"><div className="container-page py-12 sm:py-16"><Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Apartments", to: "/apartments" }, { label: project.name, to: `/apartments/${project.id}` }, { label: "Towers", to: `/apartments/${project.id}/towers` }, { label: tower.name, to: `/apartments/${project.id}/towers/${tower.id}` }, ...(floor ? [{ label: floor.label }] : [])]} /><p className="mt-9 text-xs font-bold uppercase tracking-[0.18em] text-gold-light">{project.name}</p><h1 className="mt-3 font-display text-4xl text-white sm:text-5xl">{title}</h1><p className="mt-4 max-w-2xl text-white/65">Review the fictional floor stack and select an individual flat from shared inventory.</p></div></section>
+    {view === "tower" && <TowerOverview projectId={project.id} tower={tower} />}
+    {view === "selector" && <FloorSelector projectId={project.id} tower={tower} floors={floors} />}
+    {view === "floor" && <FloorLayout projectId={project.id} towerName={tower.name} floor={floor!} />}
+  </main>;
+}
+
+function TowerOverview({ projectId, tower }: { projectId: string; tower: NonNullable<(typeof demoDatabase.towers)[string]> }) {
+  const flats = getTowerFlats(tower);
+  const inventory = countAvailability(flats);
+  return <section className="container-page py-12 sm:py-18"><div className="grid gap-8 lg:grid-cols-[1fr_22rem]"><div><div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">{[{ label: "Floors", value: tower.floors }, { label: "Residences", value: flats.length }, { label: "Available", value: inventory.available }, { label: "Reserved", value: inventory.reserved }].map((stat) => <div className="bg-surface p-5" key={stat.label}><p className="text-xs font-bold uppercase tracking-[0.07em] text-muted">{stat.label}</p><p className="mt-2 text-xl font-bold text-foreground">{stat.value}</p></div>)}</div><Card className="mt-6 p-6 sm:p-8"><Building2 className="text-gold-strong" aria-hidden="true" size={28} /><h2 className="mt-5 font-display text-3xl text-foreground">A clear vertical inventory.</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-muted">Move floor by floor to understand flat position and status. The simplified stack is a navigation aid, not a representation of structural or façade design.</p><div className="mt-6"><DemoNotice /></div></Card></div><aside><Card className="p-6"><p className="eyebrow">Next step</p><h2 className="mt-3 font-display text-3xl text-foreground">Choose a floor.</h2><p className="mt-3 text-sm leading-6 text-muted">Compare availability across the stack before opening a floor layout.</p><Button className="mt-6 w-full" asChild><Link to={`/apartments/${projectId}/towers/${tower.id}/floors`}>Open floor selector <ArrowRight aria-hidden="true" size={16} /></Link></Button></Card></aside></div></section>;
+}
+
+function FloorSelector({ projectId, tower, floors }: { projectId: string; tower: NonNullable<(typeof demoDatabase.towers)[string]>; floors: Array<NonNullable<(typeof demoDatabase.floors)[string]>> }) {
+  return <section className="container-page py-12 sm:py-18"><div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]"><div><p className="eyebrow">Floor stack</p><h2 className="mt-3 font-display text-4xl text-foreground">Select your level.</h2><p className="mt-4 text-sm leading-7 text-muted">Higher floors appear at the top. Each level shows current fictional availability derived from its four flats.</p><div className="mt-6"><DemoNotice /></div></div><div className="flex flex-col-reverse gap-2">{floors.map((floor) => { const inventory = countAvailability(getFloorFlats(floor)); return <Link key={floor.id} to={`/apartments/${projectId}/towers/${tower.id}/floors/${floor.id}`} className="group grid grid-cols-[4rem_1fr_auto] items-center gap-4 rounded border border-border bg-surface p-4 transition-all hover:-translate-y-0.5 hover:border-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"><span className="grid size-12 place-items-center rounded bg-primary font-bold text-primary-foreground">{String(floor.number).padStart(2, "0")}</span><span><strong className="text-foreground">{floor.label}</strong><span className="mt-1 block text-xs text-muted">{floor.flatIds.length} residences</span></span><span className="flex gap-3 text-xs"><span className="text-success">{inventory.available} available</span><ArrowRight className="text-gold-strong transition-transform group-hover:translate-x-1" aria-hidden="true" size={16} /></span></Link>; })}</div></div></section>;
+}
+
+function FloorLayout({ projectId, towerName, floor }: { projectId: string; towerName: string; floor: NonNullable<(typeof demoDatabase.floors)[string]> }) {
+  const flats = getFloorFlats(floor);
+  return <section className="container-page py-12 sm:py-18"><div className="grid gap-8 lg:grid-cols-[1fr_20rem]"><div><Card className="overflow-hidden bg-surface-subtle p-4 sm:p-8"><div className="grid aspect-square max-h-[42rem] grid-cols-2 gap-3 rounded-lg border-[1rem] border-[#718096] bg-[#b8afa0] p-3">{flats.map((flat, index) => <Link key={flat.id} to={`/apartments/${projectId}/flats/${flat.id}`} className={`group relative flex flex-col justify-between rounded border-2 p-4 transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-selected ${flat.availability === "available" ? "border-success bg-success/15" : flat.availability === "reserved" ? "border-reserved bg-reserved/15" : "border-danger bg-danger/10"}`}><div className="flex items-start justify-between gap-3"><div><span className="text-xs font-bold uppercase tracking-[0.07em] text-muted">Unit</span><strong className="block text-xl text-foreground">{flat.unitNumber}</strong></div><AvailabilityBadge status={flat.availability} /></div><div><p className="font-display text-2xl text-foreground">{flat.bhk} BHK</p><p className="mt-1 text-xs text-muted">{formatArea(flat.carpetArea)} · {formatPrice(flat.priceInr)}</p></div><span className={`absolute ${index % 2 === 0 ? "right-0" : "left-0"} top-1/2 h-14 w-2 -translate-y-1/2 bg-[#718096]`} aria-hidden="true" /></Link>)}</div><p className="mt-4 text-center text-xs text-muted">Illustrative 2D floor layout · Common core shown in grey</p></Card></div><aside><Card className="p-6"><Layers3 className="text-gold-strong" aria-hidden="true" size={24} /><p className="mt-5 eyebrow">{towerName}</p><h2 className="mt-2 font-display text-3xl text-foreground">{floor.label}</h2><p className="mt-3 text-sm leading-6 text-muted">Select a residence to review its complete specifications and continue to the 2D/3D floor plan.</p><dl className="mt-5 border-y border-border py-4"><div className="flex justify-between text-sm"><dt className="text-muted">Available</dt><dd className="font-semibold text-success">{countAvailability(flats).available}</dd></div><div className="mt-3 flex justify-between text-sm"><dt className="text-muted">Total residences</dt><dd className="font-semibold text-foreground">{flats.length}</dd></div></dl><Button className="mt-6 w-full" variant="secondary" asChild><Link to={`/apartments/${projectId}/towers/${floor.towerId}/floors`}>Choose another floor</Link></Button></Card></aside></div></section>;
+}
