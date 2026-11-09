@@ -8,3 +8,4 @@ coverage/
 .stitch/captured-dom.html
 .stitch/*.png
 .stitch/*-review.html
+.stitch/*.json

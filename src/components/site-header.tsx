@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useFavorites } from "@/hooks/use-favorites";
 
 const navItems = [
-  { label: "Properties", to: "/properties" },
+  { label: "Buy", to: "/properties" },
   { label: "Lands", to: "/lands" },
   { label: "Apartments", to: "/apartments" },
   { label: "Houses", to: "/houses" },
@@ -19,11 +19,11 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { favorites } = useFavorites();
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/92 backdrop-blur-xl">
-      <div className="container-page flex h-20 items-center justify-between gap-5">
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/95 backdrop-blur-xl">
+      <div className="container-page flex h-18 items-center justify-between gap-5">
         <BrandMark />
         <nav
-          className="hidden items-center gap-1 lg:flex"
+          className="hidden items-center gap-0.5 lg:flex"
           aria-label="Primary navigation"
         >
           {navItems.map((item) => (
@@ -32,8 +32,8 @@ export function SiteHeader() {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "rounded px-4 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold",
-                  isActive && "bg-surface-subtle text-foreground",
+                  "rounded-md px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold",
+                  isActive && "bg-surface text-foreground shadow-sm",
                 )
               }
             >

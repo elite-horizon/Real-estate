@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatPrice, formatPropertyKind } from "@/lib/formatters";
+import { formatArea, formatPrice, formatPropertyKind } from "@/lib/formatters";
 import type { PropertyProject } from "@/types/property";
 import { demoDatabase } from "@/data/demo-database";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -25,9 +25,17 @@ export function PropertyCard({ project }: { project: PropertyProject }) {
   const saved = isFavorite(project.id);
   const { isCompared, isFull, toggleComparison } = useComparison();
   const compared = isCompared(project.id);
+  const detail =
+    project.kind === "house"
+      ? `${project.bedrooms} beds · ${formatArea(project.builtUpArea)}`
+      : "totalArea" in project
+        ? formatArea(project.totalArea)
+        : project.kind === "apartment"
+          ? `${project.towerIds.length} towers · ${project.possessionLabel}`
+          : "Curated residence collection";
   return (
-    <Card className="group overflow-hidden">
-      <div className="relative aspect-[16/10] overflow-hidden bg-[linear-gradient(135deg,var(--color-primary),var(--color-primary-soft))]">
+    <Card className="group overflow-hidden border-border/80 bg-surface shadow-card transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-card-hover">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(135deg,var(--color-primary),var(--color-primary-soft))]">
         {media ? (
           <img
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035]"
@@ -64,7 +72,7 @@ export function PropertyCard({ project }: { project: PropertyProject }) {
           />
         </Button>
         <p className="absolute bottom-4 left-4 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-white/75">
-          Stitch-generated concept image
+          Concept image · Demo
         </p>
       </div>
       <div className="p-5">
@@ -75,7 +83,8 @@ export function PropertyCard({ project }: { project: PropertyProject }) {
         <h3 className="mt-2 font-display text-2xl font-medium text-foreground">
           {project.name}
         </h3>
-        <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted">
+        <p className="mt-3 text-sm font-semibold text-foreground">{detail}</p>
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
           {project.summary}
         </p>
         <div className="mt-5 flex items-end justify-between gap-4 border-t border-border pt-4">
@@ -87,12 +96,12 @@ export function PropertyCard({ project }: { project: PropertyProject }) {
               {formatPrice(project.startingPriceInr)}
             </p>
           </div>
-          <Button asChild size="icon" variant="secondary">
+          <Button asChild size="sm">
             <Link
               to={getProjectPath(project)}
-              aria-label={`Explore ${project.name}`}
+              aria-label={`View details for ${project.name}`}
             >
-              <ArrowUpRight aria-hidden="true" size={17} />
+              View details <ArrowUpRight aria-hidden="true" size={15} />
             </Link>
           </Button>
         </div>
