@@ -1,5 +1,9 @@
 import { lazy } from "react";
-import { createBrowserRouter, type RouteObject } from "react-router-dom";
+import {
+  createBrowserRouter,
+  createHashRouter,
+  type RouteObject,
+} from "react-router-dom";
 import { PublicLayout } from "@/layouts/public-layout";
 
 const FoundationPage = lazy(() =>
@@ -130,7 +134,11 @@ const childRoutes: RouteObject[] = routePaths.map((path) => ({
   element: <FoundationPage />,
 }));
 
-export const router = createBrowserRouter([
+const createRouter = import.meta.env.PROD
+  ? createHashRouter
+  : createBrowserRouter;
+
+export const router = createRouter([
   {
     element: <PublicLayout />,
     children: [
